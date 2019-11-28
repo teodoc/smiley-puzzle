@@ -1,5 +1,5 @@
 //Puzzle
-const size = 9 //1,4,9
+const size = getUrlParam('size',9); //1,4,9
 var sqrt_size = Math.sqrt(tsize);
 
 var mpuzzle = [], tpuzzle = [];
@@ -14,9 +14,16 @@ var solutions = [];
 var count = 0;
 var tsize = size;
 var startTime,endTime;
-//Puzzle
 
-mpuzzle = stdPuzzle(size);
+//Puzzle
+mpuzzle = getUrlParam("puzzle",0);
+if (mpuzzle) {
+  mpuzzle = JSON.parse(atob(mpuzzle));
+}
+else {
+  mpuzzle = stdPuzzle();
+}
+
 initHTML() 
 
 solutions = []
@@ -53,9 +60,7 @@ function solve(c, i) {
       if (i <= tsize -1) {
         solve(c, i); 
       } else {
-        //if (check(c.puzzle, 1)) {
-          solutions.push(c.puzzle);
-       // }
+        solutions.push(c.puzzle);
       }
     }
   });
@@ -179,6 +184,8 @@ function initHTML() {
 function redraw(){
     console.clear;
   let i=0, puzzle = [];
+  let link = "index.html?puzzle="+btoa(JSON.stringify(mpuzzle))+"&size="+size;
+
   tsize = 1; count = 0;
   sqrt_size = Math.sqrt(tsize);
   mpuzzle.forEach( p => {puzzle.push([p])})
@@ -205,7 +212,8 @@ function redraw(){
    });
 
   document.getElementById('text').innerHTML = "<p>C:" + count + "  " +
-  (endTime - startTime + " ms ") + solutions.length+ " Lösungen " +"</p>"
+  (endTime - startTime + " ms ") + solutions.length+ " Lösungen " +
+  "<a href="+link+">Puzzle Link</a></p>"
 }
 
 function drawPuzzle(puzzle, can) {
@@ -401,7 +409,7 @@ function randomPuzzle()
 function emptyPuzzle()
 {
   let puzzle = [] 
-  c = "abcdefghijklmnopqrstuvwxyz0123456789".split('');
+  let c = "abcdefghijklmnopqrstuvwxyz0123456789".split('');
   for(let i=0; i<size; i++){
     puzzle.push([c[i],0,0,0,0])
   }
@@ -411,6 +419,7 @@ function emptyPuzzle()
 function stdPuzzle()
 {
   let puzzle = [];
+  let c = "abcdefghijklmnopqrstuvwxyz0123456789".split('');
   puzzle.push(["a", 1, -4, -2, 3]);
   puzzle.push(["b", -3, 2, 1, -2]);
   puzzle.push(["c", -1, 3, 4, -2]);
@@ -422,6 +431,11 @@ function stdPuzzle()
   puzzle.push(["g", -3, 4, 1, -2]);
   puzzle.push(["h", -3, 2, 1, -4]);
   puzzle.push(["i", -3, 4, 1, -2]); 
+
+  for (let i=puzzle.length; i<size; i++){
+    puzzle.push([c[i],0,0,0,0])
+  }
+
   return puzzle;
 }
 
@@ -434,3 +448,18 @@ function getRandom() {
   }
 }
 
+function getUrlParam(parameter, defaultvalue){
+  var urlparameter = defaultvalue;
+  if(window.location.href.indexOf(parameter) > -1){
+      urlparameter = getUrlVars()[parameter];
+      }
+  return urlparameter;
+}
+
+function getUrlVars() {
+  var vars = {};
+  var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+      vars[key] = value;
+  });
+  return vars;
+}
