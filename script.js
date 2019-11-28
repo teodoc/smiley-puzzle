@@ -1,10 +1,10 @@
 //Puzzle
-const size = getUrlParam('size',9); //1,4,9
+const size = parseInt(getUrlParam('size',9)); //1,4,9
 var sqrt_size = Math.sqrt(tsize);
 
 var mpuzzle = [], tpuzzle = [];
-const drawsize=110;
-const maxsolutions=15;
+const drawsize=parseInt(getUrlParam('ds',100));
+const maxsolutions=20;
 
 var cancount=0;
 var maxchecks=100000
@@ -140,26 +140,26 @@ function drawtiles() {
   mpuzzle.forEach( p => {puzzle.push([p])})
 
   puzzle.forEach(p => {
-      div.insertAdjacentHTML('beforeend', '<canvas id="can' + cancount +
-      '" width="' + (sqrt_size * drawsize) + '" height="' + (sqrt_size * drawsize) + '"></canvas>');
+    div.insertAdjacentHTML('beforeend', '<canvas id="can' + cancount +
+                           '" width="' + (sqrt_size * drawsize) + 
+                           '" height="' + (sqrt_size * drawsize) + '"></canvas>');
     canvaslist[cancount] = document.getElementById("can" + (cancount));
 
     canvaslist[cancount].i = cancount;
     canvaslist[cancount].onclick = function(event) {
-      if((event.y-this.getBoundingClientRect().y ) < (drawsize/4)) {
+      if((event.y-this.getBoundingClientRect().y ) < ((drawsize+30)/3)) {
         mpuzzle[this.i][1] = next(mpuzzle[this.i][1]);
       }
-      if((event.y-this.getBoundingClientRect().y ) > drawsize-(drawsize/4)) {
+      if((event.y-this.getBoundingClientRect().y ) > (drawsize+30)-((drawsize+30)/3)) {
         mpuzzle[this.i][3] = next(mpuzzle[this.i][3]);
       }
-      if((event.x-this.getBoundingClientRect().x ) < (drawsize/4)) {
+      if((event.x-this.getBoundingClientRect().x ) < ((drawsize+30)/3)) {
         mpuzzle[this.i][4] = next(mpuzzle[this.i][4]);
       }
-      if((event.x-this.getBoundingClientRect().x ) > drawsize-(drawsize/4)) {
+      if((event.x-this.getBoundingClientRect().x ) > (drawsize+30)-((drawsize+30)/3)) {
         mpuzzle[this.i][2] = next(mpuzzle[this.i][2]);
       }
       redraw();
-
       }
        drawPuzzle(p, canvaslist[cancount]);
        cancount++;    
@@ -172,17 +172,18 @@ function initHTML() {
   tsize = size;
   sqrt_size = Math.sqrt(tsize);
   let div = document.getElementById('can');
-  let start = cancount
+  let start = cancount;
+  let padding = Math.floor(15*drawsize/100);
   for(let i=0; i<maxsolutions; i++){
-          div.insertAdjacentHTML('beforeend', '<canvas id="can' + cancount +
-      '" width="' + (sqrt_size * drawsize) + '" height="' + (sqrt_size * drawsize) + '"></canvas>');
+    div.insertAdjacentHTML('beforeend', '<canvas style="padding:'+padding+'px;"' +
+                           'id="can' + cancount + '" width="' + (sqrt_size * drawsize) + 
+                           '" height="' + (sqrt_size * drawsize) + '"></canvas>');
     canvaslist[cancount] = document.getElementById("can" + (cancount));
     cancount++;
   }
 }
 
 function redraw(){
-    console.clear;
   let i=0, puzzle = [];
   let link = "index.html?puzzle="+btoa(JSON.stringify(mpuzzle))+"&size="+size;
 
@@ -212,41 +213,43 @@ function redraw(){
    });
 
   document.getElementById('text').innerHTML = "<p>C:" + count + "  " +
-  (endTime - startTime + " ms ") + solutions.length+ " Lösungen " +
-  "<a href="+link+">Puzzle Link</a></p>"
+    (endTime - startTime + " ms ") + solutions.length+ " Lösungen " +
+    "<a href="+link+">Puzzle Link</a></p>"
 }
 
 function drawPuzzle(puzzle, can) {
   const color = ["rgb(240,240,240)", "rgb(255,255,0)", "rgb(255,130,0)",
                  "rgb(80,190,80)", "rgb(0,80,255)"];
-  let c = can;
-  let ctx = c.getContext("2d");
-  let s = sqrt_size * drawsize;
+  let ctx = can.getContext("2d");
+  let s = drawsize/100; //scale
   let x = 0;
   let y = 0;
 
   //Clear
+  ctx.lineWidth = Math.floor(1*s)
+  
   ctx.fillStyle = "#FFFFFF";
-  ctx.fillRect(0, 0, s, s);
-  ctx.rect(0, 0, s, s);
+  ctx.fillRect(0, 0, sqrt_size * drawsize, sqrt_size * drawsize);
+  ctx.rect(0, 0, sqrt_size * drawsize, sqrt_size * drawsize);
   ctx.stroke();
+
   //Grid
   for (let i = 0; i < sqrt_size - 1; i++) {
     ctx.moveTo(0, drawsize + i * drawsize);
-    ctx.lineTo(s, drawsize + i * drawsize);
+    ctx.lineTo(sqrt_size * drawsize, drawsize + i * drawsize);
     ctx.stroke();
     ctx.moveTo(drawsize + i * drawsize, 0);
-    ctx.lineTo(drawsize + i * drawsize, s);
+    ctx.lineTo(drawsize + i * drawsize, sqrt_size * drawsize);
     ctx.stroke();
   }
 
   for (let i = 0; i < tsize; i++) {
 
     ctx.fillStyle = "#000000";
-    ctx.font = "30px Arial";
+    ctx.font = (30*s)+"px Arial";
     x = (i % sqrt_size) * drawsize;
     y = Math.floor(i / sqrt_size) * drawsize
-    ctx.fillText(puzzle[i][0], 42 + x, y + 59);
+    ctx.fillText(puzzle[i][0], 42*s + x, y + 59*s);
 
     // top
     x = drawsize/2 + (i % sqrt_size) * drawsize;
@@ -254,23 +257,23 @@ function drawPuzzle(puzzle, can) {
 
     ctx.fillStyle = color[Math.abs(puzzle[i][1])];
     ctx.beginPath();
-    ctx.arc(x, y, 25, 0, Math.PI, false);
+    ctx.arc(x, y, 24*s, 0, Math.PI);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = "#000000";
     ctx.beginPath();
     if (puzzle[i][1] < 0) {
-      ctx.arc(x, y, 15, 0, 0.5 * Math.PI);
+      ctx.arc(x, y, 15*s, 0, 0.5 * Math.PI);
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(-9 + x, 8 + y, 4, 0, 2 * Math.PI);
+      ctx.arc(-9*s + x, 8*s + y, 4*s, 0, 2 * Math.PI);
       ctx.fill();
     } else {
-      ctx.arc(x, y, 15, 0.5 * Math.PI, Math.PI);
+      ctx.arc(x, y, 15*s, 0.5 * Math.PI, Math.PI);
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(+8 + x, 9 + y, 4, 0, 2 * Math.PI);
+      ctx.arc(+8*s + x, 9*s + y, 4*s, 0, 2 * Math.PI);
       ctx.fill();
     }
 
@@ -280,23 +283,23 @@ function drawPuzzle(puzzle, can) {
 
     ctx.fillStyle = color[Math.abs(puzzle[i][2])];
     ctx.beginPath();
-    ctx.arc(x, y, 25, 1.5 * Math.PI, 0.5 * Math.PI, true);
+    ctx.arc(x, y, 24*s, 0.5 * Math.PI, 1.5 * Math.PI);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = "#000000";
     ctx.beginPath();
     if (puzzle[i][2] < 0) {
-      ctx.arc(x, y, 15, Math.PI, 0.5 * Math.PI, true);
+      ctx.arc(x, y, 15*s, 0.5 * Math.PI, Math.PI);
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(-9 + x, -8 + y, 4, 0, 2 * Math.PI);
+      ctx.arc(-9*s + x, -8*s + y, 4*s, 0, 2 * Math.PI);
       ctx.fill();
     } else {
-      ctx.arc(x, y, 15, Math.PI, 1.5 * Math.PI, false);
+      ctx.arc(x, y, 15*s, Math.PI, 1.5 * Math.PI);
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(-9 + x, +8 + y, 4, 0, 2 * Math.PI);
+      ctx.arc(-9*s + x, +8*s + y, 4*s, 0, 2 * Math.PI);
       ctx.fill();
     }
     ctx.stroke();
@@ -307,23 +310,23 @@ function drawPuzzle(puzzle, can) {
 
     ctx.fillStyle = color[Math.abs(puzzle[i][3])];
     ctx.beginPath();
-    ctx.arc(x, y, 25, 0, Math.PI, true);
+    ctx.arc(x, y, 24*s, Math.PI, 2*Math.PI);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = "#000000";
     ctx.beginPath();
     if (puzzle[i][3] < 0) {
-      ctx.arc(x, y, 15, Math.PI, 1.5 * Math.PI);
+      ctx.arc(x, y, 15*s, Math.PI, 1.5 * Math.PI);
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(+8 + x, -9 + y, 4, 0, 2 * Math.PI);
+      ctx.arc(+8*s + x, -9*s + y, 4*s, 0, 2 * Math.PI);
       ctx.fill();
     } else {
-      ctx.arc(x, y, 15, 1.5 * Math.PI, 0);
+      ctx.arc(x, y, 15*s, 1.5 * Math.PI, 0);
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(-8 + x, -9 + y, 4, 0, 2 * Math.PI);
+      ctx.arc(-8*s + x, -9*s + y, 4*s, 0, 2 * Math.PI);
       ctx.fill();
     }
     ctx.stroke();
@@ -333,23 +336,23 @@ function drawPuzzle(puzzle, can) {
     y = drawsize/2 + Math.floor(i / sqrt_size) * drawsize;
     ctx.fillStyle = color[Math.abs(puzzle[i][4])];
     ctx.beginPath();
-    ctx.arc(x, y, 25, 1.5 * Math.PI, 0.5 * Math.PI, false);
+    ctx.arc(x, y, 24*s, 1.5 * Math.PI, 0.5 * Math.PI);
     ctx.fill();
     ctx.stroke();
 
     ctx.beginPath();
     ctx.fillStyle = "#000000";
     if (puzzle[i][4] < 0) {
-      ctx.arc(x, y, 15, 1.5 * Math.PI, 0);
+      ctx.arc(x, y, 15*s, 1.5 * Math.PI, 0);
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(9 + x, +8 + y, 4, 0, 2 * Math.PI);
+      ctx.arc(9*s + x, +8*s + y, 4*s, 0, 2 * Math.PI);
       ctx.fill();
     } else {
-      ctx.arc(x, y, 15, 0, 0.5 * Math.PI);
+      ctx.arc(x, y, 15*s, 0, 0.5 * Math.PI);
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(9 + x, -8 + y, 4, 0, 2 * Math.PI);
+      ctx.arc(9*s + x, -8*s + y, 4*s, 0, 2 * Math.PI);
       ctx.fill();
     }
     ctx.stroke();
@@ -380,7 +383,7 @@ function checkall(puzzle, f = 0) {
 
 
 function next(n) {
-  if(n < 0) {
+  if(n <= 0) {
     n=-n;
     n++;
     if (n>4) { 
@@ -391,7 +394,6 @@ function next(n) {
     }
   }
   else {
-    if(n==0){ return Math.floor(Math.random() * 4+1)}
     return -n;
   }
 }
