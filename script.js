@@ -217,7 +217,7 @@ function redraw(){
 }
 
 function drawPuzzle(puzzle, can) {
-  const color = ["rgb(255,255,255)", "rgb(255,255,0)", "rgb(255,130,0)",
+  const color = ["rgb(240,240,240)", "rgb(255,255,0)", "rgb(255,130,0)",
                  "rgb(80,190,80)", "rgb(0,80,255)"];
   let c = can;
   let ctx = c.getContext("2d");
@@ -384,7 +384,7 @@ function next(n) {
     n=-n;
     n++;
     if (n>4) { 
-      return 1
+      return 0
     }
     else {
       return n
