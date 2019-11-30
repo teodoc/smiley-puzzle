@@ -4,10 +4,10 @@ var sqrt_size = Math.sqrt(tsize);
 
 var mpuzzle = [], tpuzzle = [];
 const drawsize=parseInt(getUrlParam('ds',100));
-const maxsolutions=20;
+const maxsolutions=200;
 
 var cancount=0;
-var maxchecks=100000
+var maxchecks=1000000
 var canvaslist = [], mouseover = []
 
 var solutions = [];
@@ -186,6 +186,7 @@ function initHTML() {
 function redraw(){
   let i=0, puzzle = [];
   let link = "index.html?puzzle="+btoa(JSON.stringify(mpuzzle))+"&size="+size;
+  let pluslink = "index.html?puzzle="+btoa(JSON.stringify(addtile()))+"&size="+size;
 
   tsize = 1; count = 0;
   sqrt_size = Math.sqrt(tsize);
@@ -214,7 +215,7 @@ function redraw(){
 
   document.getElementById('text').innerHTML = "<p>C:" + count + "  " +
     (endTime - startTime + " ms ") + solutions.length+ " Lösungen " +
-    "<a href="+link+">Puzzle Link</a></p>"
+    "<a href="+link+">Puzzle Link</a><a href="+pluslink+">+</a></p>"
 }
 
 function drawPuzzle(puzzle, can) {
@@ -439,6 +440,14 @@ function stdPuzzle()
   }
 
   return puzzle;
+}
+
+function addtile() {
+  let puzzle = copy(mpuzzle);
+  let c = "abcdefghijklmnopqrstuvwxyz0123456789".split('');
+  puzzle.push([c[puzzle.length],0,0,0,0]);
+
+  return puzzle
 }
 
 function getRandom() {
