@@ -4,10 +4,10 @@ var sqrt_size = Math.sqrt(tsize);
 
 var mpuzzle = [], tpuzzle = [];
 const drawsize=parseInt(getUrlParam('ds',100));
-const maxsolutions=200;
+const maxsolutions=parseInt(getUrlParam('max',200));
 
 var cancount=0;
-var maxchecks=1000000
+var maxchecks=10000000
 var canvaslist = [], mouseover = []
 
 var solutions = [];
@@ -26,12 +26,6 @@ else {
 
 initHTML() 
 
-solutions = []
-
-//Solve
-solve(prep(), 0);
-
-
 //Output
 redraw()
 
@@ -42,9 +36,9 @@ function Puzzle(p) {
 }
 
 function prep() {
-  let p = new Puzzle([["", 0, 0, 0, 0]]);
-  tpuzzle = copy(mpuzzle)
-  tpuzzle.forEach(part => {
+  let p = new Puzzle([]);
+  tpuzzle = compress(mpuzzle);
+  compress(mpuzzle,false).forEach(part => { 
     p.puzzle[0] = part;
     t = new Puzzle(copy(p.puzzle));
     p.childs.push(t);
@@ -52,7 +46,7 @@ function prep() {
   return p;
 }
 
-function solve(c, i) {
+function solve(c, i=0) {
   i++;
   c.childs.forEach(c => {
     if(solutions.length < maxsolutions && count < maxchecks)  {
@@ -60,24 +54,39 @@ function solve(c, i) {
       if (i <= tsize -1) {
         solve(c, i); 
       } else {
-        solutions.push(c.puzzle);
+        solutions.push(c.puzzle);        
       }
     }
   });
+  c.puzzle = null;
 }
 
 function fill (p,n) {
-    let pt = []
+    let pt = [],next,c;
     p.puzzle.forEach( el => { pt.push(el[0]) })
-    for (let i = 0; i < tsize; i++) {
+    for (let i = 0; i < tpuzzle.length; i++) {
       if (pt.indexOf(tpuzzle[i][0]) === -1) {
-        for (let r = 0; r < 4; r++) {
-          p.puzzle[n] = tpuzzle[i];
-          if (check(p.puzzle,n)) {
-            t = new Puzzle(copy(p.puzzle)); //1:1 copy
-            p.childs.push(t);
+        next = true;
+      }
+      else if (tpuzzle[i][0].length > 1){
+        c=0;
+        for(let j=0; j<p.puzzle.length-1; j++) {
+          if(p.puzzle[j][0] === tpuzzle[i][0]) {
+            c++;
           }
-          if(r!==3) {p.puzzle[n] = rotate(p.puzzle[n]);}
+        }
+
+        next = (c < tpuzzle[i][0].length) ? true : false
+      }
+      else {
+        next = false;
+      }
+
+      if (next)  {
+        p.puzzle[n] = tpuzzle[i];
+        if (check(p.puzzle,n)) {
+          t = new Puzzle(copy(p.puzzle)); //1:1 copy
+          p.childs.push(t);
         }
       }
     }
@@ -122,7 +131,7 @@ function check(puzzle, n) {
 }
 
 
-function rotate(piece) {
+function rotatepiece(piece) {
   piece.push(piece[1]);
   piece.splice(1, 1);
   return piece;
@@ -130,6 +139,38 @@ function rotate(piece) {
 
 function copy(puzzle){
   return JSON.parse(JSON.stringify(puzzle));;
+}
+
+function compress(puzzle,rotate=true) {
+  let mp = copy(puzzle);
+  let p = [];
+
+  if(rotate) {
+    mp.forEach(part => {
+      for (let r = 0; r < 4; r++) {
+        part = rotatepiece(part);
+        p.push(copy(part));
+     }
+    });
+  }
+  else {
+    p=mp;
+  }
+
+  for(let i=0; i<p.length; i++) {
+    for(let j=0; j<p.length; j++) {
+      if(p[i][0] !== p[j][0] && p[i][1] === p[j][1] && p[i][2] === p[j][2] && p[i][3] === p[j][3] && p[i][4] === p[j][4] && p[i][0] !== "-") {
+        if (p[i][0].indexOf(p[j][0]) === -1){
+          p[i][0] =  p[i][0] + p[j][0];
+          p[i][0] = [...new Set(p[i][0])].sort().join("");
+        }
+        p[j][0] = "-";        
+      }
+    }
+    p = p.filter(a => a[0] !== "-");
+
+  }
+  return p;
 }
 
 function drawtiles() {
@@ -205,7 +246,7 @@ function redraw(){
   sqrt_size = Math.sqrt(tsize); 
   solutions = [];
   startTime = new Date();
-  solve(prep(), 0);
+  solve(prep());
   endTime = new Date();
 
   solutions.forEach(p => {       
@@ -247,10 +288,10 @@ function drawPuzzle(puzzle, can) {
   for (let i = 0; i < tsize; i++) {
 
     ctx.fillStyle = "#000000";
-    ctx.font = (30*s)+"px Arial";
+    ctx.font = Math.floor((30-puzzle[i][0].length*3)*s)+"px Arial";
     x = (i % sqrt_size) * drawsize;
     y = Math.floor(i / sqrt_size) * drawsize
-    ctx.fillText(puzzle[i][0], 42*s + x, y + 59*s);
+    ctx.fillText(puzzle[i][0], 41*s + x-puzzle[i][0].length*2, y + 59*s);
 
     // top
     x = drawsize/2 + (i % sqrt_size) * drawsize;
