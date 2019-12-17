@@ -159,7 +159,9 @@ function compress(puzzle,rotate=true) {
 
   for(let i=0; i<p.length; i++) {
     for(let j=0; j<p.length; j++) {
-      if(p[i][0] !== p[j][0] && p[i][1] === p[j][1] && p[i][2] === p[j][2] && p[i][3] === p[j][3] && p[i][4] === p[j][4] && p[i][0] !== "-") {
+      if(p[i][0] !== p[j][0] && p[i][1] === p[j][1] &&
+         p[i][2] === p[j][2] && p[i][3] === p[j][3] && 
+         p[i][4] === p[j][4] && p[i][0] !== "-") {
         if (p[i][0].indexOf(p[j][0]) === -1){
           p[i][0] =  p[i][0] + p[j][0];
           p[i][0] = [...new Set(p[i][0])].sort().join("");
@@ -227,7 +229,11 @@ function initHTML() {
 function redraw(){
   let i=0, puzzle = [];
   let link = "index.html?puzzle="+btoa(JSON.stringify(mpuzzle))+"&size="+size;
-  let pluslink = "index.html?puzzle="+btoa(JSON.stringify(addtile()))+"&size="+size;
+  let pluslink = "index.html?puzzle="+btoa(JSON.stringify(addpiece()))+"&size="+size;
+  let minuslink = "index.html?puzzle="+btoa(JSON.stringify(removepiece()))+"&size="+size;
+  let rndlink = "index.html?puzzle="+btoa(JSON.stringify(randomPuzzle()))+"&size="+size;
+  let emptylink = "index.html?puzzle="+btoa(JSON.stringify(emptyPuzzle()))+"&size="+size;
+  let resetlink = "index.html?puzzle="+btoa(JSON.stringify(stdPuzzle()))+"&size=9";
 
   tsize = 1; count = 0;
   sqrt_size = Math.sqrt(tsize);
@@ -255,8 +261,13 @@ function redraw(){
    });
 
   document.getElementById('text').innerHTML = "<p>C:" + count + "  " +
-    (endTime - startTime + " ms ") + solutions.length+ " Lösungen " +
-    "<a href="+link+">Puzzle Link</a><a href="+pluslink+">+</a></p>"
+    (endTime - startTime + " ms ") + solutions.length+ " Lösungen </p><p>" +
+    "<a href="+link+" class='link-button'>Puzzle Link</a>" +
+    "<a href="+pluslink+" class='link-button'>+</a>" +
+    "<a href="+minuslink+" class='link-button'>-</a>" +
+    "<a href="+rndlink+" class='link-button'>Zufall</a>" +
+    "<a href="+emptylink+" class='link-button'>Leer</a>" +
+    "<a href="+resetlink+" class='link-button'>Reset</a></p>";
 }
 
 function drawPuzzle(puzzle, can) {
@@ -444,7 +455,7 @@ function randomPuzzle()
 {
   let puzzle = [] 
   c = "abcdefghijklmnopqrstuvwxyz0123456789".split('');
-  for(let i=0; i<size; i++){
+  for(let i=0; i<mpuzzle.length; i++){
     puzzle.push([c[i],getRandom(),getRandom(),getRandom(),getRandom()])
   }
   return puzzle;
@@ -454,7 +465,7 @@ function emptyPuzzle()
 {
   let puzzle = [] 
   let c = "abcdefghijklmnopqrstuvwxyz0123456789".split('');
-  for(let i=0; i<size; i++){
+  for(let i=0; i<mpuzzle.length; i++){
     puzzle.push([c[i],0,0,0,0])
   }
   return puzzle;
@@ -483,12 +494,18 @@ function stdPuzzle()
   return puzzle;
 }
 
-function addtile() {
+function addpiece() {
   let puzzle = copy(mpuzzle);
   let c = "abcdefghijklmnopqrstuvwxyz0123456789".split('');
   puzzle.push([c[puzzle.length],0,0,0,0]);
 
   return puzzle
+}
+
+function removepiece() {
+  let puzzle = copy(mpuzzle);
+  puzzle.pop();
+  return puzzle;
 }
 
 function getRandom() {
