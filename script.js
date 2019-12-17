@@ -12,8 +12,8 @@ var canvaslist = [], mouseover = []
 
 var solutions = [];
 var count = 0;
+var time = 0;
 var tsize = size;
-var startTime,endTime;
 
 //Puzzle
 mpuzzle = getUrlParam("puzzle",0);
@@ -24,10 +24,9 @@ else {
   mpuzzle = stdPuzzle();
 }
 
-initHTML() 
+init();
 
-//Output
-redraw()
+main();
 
 
 function Puzzle(p) {
@@ -62,7 +61,7 @@ function solve(c, i=0) {
 }
 
 function fill (p,n) {
-    let pt = [],next,c;
+    let pt = [], next, c;
     p.puzzle.forEach( el => { pt.push(el[0]) })
     for (let i = 0; i < tpuzzle.length; i++) {
       if (pt.indexOf(tpuzzle[i][0]) === -1) {
@@ -75,7 +74,6 @@ function fill (p,n) {
             c++;
           }
         }
-
         next = (c < tpuzzle[i][0].length) ? true : false
       }
       else {
@@ -131,7 +129,7 @@ function check(puzzle, n) {
 }
 
 
-function rotatepiece(piece) {
+function rotatePiece(piece) {
   piece.push(piece[1]);
   piece.splice(1, 1);
   return piece;
@@ -148,7 +146,7 @@ function compress(puzzle,rotate=true) {
   if(rotate) {
     mp.forEach(part => {
       for (let r = 0; r < 4; r++) {
-        part = rotatepiece(part);
+        part = rotatePiece(part);
         p.push(copy(part));
      }
     });
@@ -175,8 +173,8 @@ function compress(puzzle,rotate=true) {
   return p;
 }
 
-function drawtiles() {
-  div = document.getElementById('can');
+function init() {
+  div = document.getElementById('header');
   tsize = 1;  sqrt_size = Math.sqrt(tsize);
 
   let puzzle = []
@@ -202,22 +200,44 @@ function drawtiles() {
       if((event.x-this.getBoundingClientRect().x ) > (drawsize+30)-((drawsize+30)/3)) {
         mpuzzle[this.i][2] = next(mpuzzle[this.i][2]);
       }
-      redraw();
-      }
-       drawPuzzle(p, canvaslist[cancount]);
-       cancount++;    
-    });
-    div.insertAdjacentHTML('beforeend', '<br>');
+      tsize = 1;
+      drawPuzzle(p, canvaslist[this.i]);
+      tsize = size; sqrt_size = Math.sqrt(tsize); 
+      main();
+    }
+    drawPuzzle(p, canvaslist[cancount]);
+    cancount++;    
+  });
+
+  div.insertAdjacentHTML('beforeend', '<br>');
+  tsize = size; sqrt_size = Math.sqrt(tsize); 
 }
 
-function initHTML() {
-  drawtiles();
+function main(){
+
+  count = 0;  
+  solutions = [];
+
+  startTime = new Date();
+  solve(prep());
+  endTime = new Date();  time = endTime-startTime;
+
+  createCanvases();
+
+  drawHeader();
+  drawSolutions();
+}
+
+function createCanvases() {
   tsize = size;
   sqrt_size = Math.sqrt(tsize);
-  let div = document.getElementById('can');
-  let start = cancount;
+  let div = document.getElementById('solutions');
   let padding = Math.floor(15*drawsize/100);
-  for(let i=0; i<maxsolutions; i++){
+
+  cancount = mpuzzle.length;
+  document.getElementById('solutions').innerHTML = '';
+
+  for(let i=0; i<solutions.length; i++){
     div.insertAdjacentHTML('beforeend', '<canvas style="padding:'+padding+'px;"' +
                            'id="can' + cancount + '" width="' + (sqrt_size * drawsize) + 
                            '" height="' + (sqrt_size * drawsize) + '"></canvas>');
@@ -226,48 +246,31 @@ function initHTML() {
   }
 }
 
-function redraw(){
-  let i=0, puzzle = [];
+
+function drawHeader() {
   let link = "index.html?puzzle="+btoa(JSON.stringify(mpuzzle))+"&size="+size;
-  let pluslink = "index.html?puzzle="+btoa(JSON.stringify(addpiece()))+"&size="+size;
-  let minuslink = "index.html?puzzle="+btoa(JSON.stringify(removepiece()))+"&size="+size;
+  let pluslink = "index.html?puzzle="+btoa(JSON.stringify(addPiece()))+"&size="+size;
+  let minuslink = "index.html?puzzle="+btoa(JSON.stringify(removePiece()))+"&size="+size;
   let rndlink = "index.html?puzzle="+btoa(JSON.stringify(randomPuzzle()))+"&size="+size;
   let emptylink = "index.html?puzzle="+btoa(JSON.stringify(emptyPuzzle()))+"&size="+size;
   let resetlink = "index.html?puzzle="+btoa(JSON.stringify(stdPuzzle()))+"&size=9";
 
-  tsize = 1; count = 0;
-  sqrt_size = Math.sqrt(tsize);
-  mpuzzle.forEach( p => {puzzle.push([p])})
-  puzzle.forEach(p => {      
-       drawPuzzle(p, canvaslist[i]);
-       i++;
-  });
-
-  for(let j=i; j<maxsolutions+i; j++){
-    context = canvaslist[j].getContext('2d');
-    context.clearRect(0, 0, canvaslist[j].width, canvaslist[j].height);
-  }
-
-  tsize = size;
-  sqrt_size = Math.sqrt(tsize); 
-  solutions = [];
-  startTime = new Date();
-  solve(prep());
-  endTime = new Date();
-
-  solutions.forEach(p => {       
-    if(canvaslist.length > i) { drawPuzzle(p, canvaslist[i]); }
-    i++;
-   });
-
   document.getElementById('text').innerHTML = "<p>C:" + count + "  " +
-    (endTime - startTime + " ms ") + solutions.length+ " Lösungen </p><p>" +
+    (time + " ms ") + solutions.length+ " Lösungen </p><p>" +
     "<a href="+link+" class='link-button'>Puzzle Link</a>" +
     "<a href="+pluslink+" class='link-button'>+</a>" +
     "<a href="+minuslink+" class='link-button'>-</a>" +
     "<a href="+rndlink+" class='link-button'>Zufall</a>" +
     "<a href="+emptylink+" class='link-button'>Leer</a>" +
     "<a href="+resetlink+" class='link-button'>Reset</a></p>";
+}
+
+function drawSolutions() {
+  i=mpuzzle.length;
+  solutions.forEach(p => {       
+    if(canvaslist.length > i) { drawPuzzle(p, canvaslist[i]); }
+    i++;
+  });
 }
 
 function drawPuzzle(puzzle, can) {
@@ -412,7 +415,7 @@ function drawPuzzle(puzzle, can) {
   }
 }
 
-function checkall(puzzle, f = 0) {
+function checkAll(puzzle, f = 0) {
   count++;
   let a = 0, b = 0,l=puzzle.length;
   for (let i = 0; i < sqrt_size; i++) {
@@ -485,7 +488,7 @@ function stdPuzzle()
 
   puzzle.push(["g", -3, 4, 1, -2]);
   puzzle.push(["h", -3, 2, 1, -4]);
-  puzzle.push(["i", -3, 4, 1, -2]); 
+  puzzle.push(["i", 4, 1, -2, -3]); 
 
   for (let i=puzzle.length; i<size; i++){
     puzzle.push([c[i],0,0,0,0])
@@ -494,7 +497,7 @@ function stdPuzzle()
   return puzzle;
 }
 
-function addpiece() {
+function addPiece() {
   let puzzle = copy(mpuzzle);
   let c = "abcdefghijklmnopqrstuvwxyz0123456789".split('');
   puzzle.push([c[puzzle.length],0,0,0,0]);
@@ -502,7 +505,7 @@ function addpiece() {
   return puzzle
 }
 
-function removepiece() {
+function removePiece() {
   let puzzle = copy(mpuzzle);
   puzzle.pop();
   return puzzle;
