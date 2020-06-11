@@ -244,7 +244,7 @@ function createCanvases() {
 
 
 function drawHeader() {
-  let param = "&size="+size+"&ds="+drawsize+"&max="+maxsolutions+"&"
+  let param = "size="+size+"&ds="+drawsize+"&max="+maxsolutions+"&"
   let link = "index.html?"+param+"puzzle="+btoa(JSON.stringify(mpuzzle));
   let pluslink = "index.html?"+param+"puzzle="+btoa(JSON.stringify(addPiece()));
   let minuslink = "index.html?"+param+"puzzle="+btoa(JSON.stringify(removePiece()));
@@ -253,14 +253,22 @@ function drawHeader() {
   let resetlink = "index.html?size=3&puzzle="+btoa(JSON.stringify(stdPuzzle()));
   let solutionstext = (solutions.length == maxsolutions || count >= maxchecks)  ? solutions.length+"+" : solutions.length;
 
-  document.getElementById('text').innerHTML = "<p>C:" + count + "  " +
+  let html = "<p>C:" + count + "  " +
     (time + " ms <b>") + solutionstext+ "</b> Lösungen </p><p>" +
-    "<a href="+link+" class='link-button'>Puzzle Link</a>" +
-    "<a href="+pluslink+" class='link-button'>+</a>" +
-    "<a href="+minuslink+" class='link-button'>-</a>" +
-    "<a href="+rndlink+" class='link-button'>Zufall</a>" +
+    "<a href="+link+" class='link-button'>Puzzle Link</a>";
+
+  if (mpuzzle.length < chars.length)  {
+    html = html + "<a href="+pluslink+" class='link-button'>+</a>";
+  } 
+  if (mpuzzle.length > 1)  {
+    html = html + "<a href="+minuslink+" class='link-button'>-</a>";
+  }
+  
+  html = html + "<a href="+rndlink+" class='link-button'>Zufall</a>" +
     "<a href="+emptylink+" class='link-button'>Leer</a>" +
     "<a href="+resetlink+" class='link-button'>Reset</a></p>";
+
+  document.getElementById('text').innerHTML = html;
 }
 
 function drawSolutions() {
@@ -269,6 +277,9 @@ function drawSolutions() {
     if(canvaslist.length > i) { drawPuzzle(p, canvaslist[i],size,drawsize); }
     i++;
   });
+  if (solutions.length == 0) {
+    document.getElementById('solutions').innerHTML = "<h3>Es gibt keine Lösung für dieses Puzzle</h3>";  
+  }
 }
 
 //puzzle, canvas, size, drawsize
